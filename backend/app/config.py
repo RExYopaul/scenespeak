@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Model Provider ("gemini" or "openai")
     vlm_provider: str = "gemini"
     vlm_api_key: str = ""
-    vlm_model: str = "gemini-2.0-flash"
+    vlm_model: str = "gemini-3.5-flash"
     vlm_base_url: Optional[str] = None
 
     # VLM Generation Parameters (Section 8.3)

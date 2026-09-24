@@ -20,12 +20,19 @@ def test_health_check():
     assert "version" in data
 
 
-def test_describe_endpoint_with_mock():
-    """Verify /api/describe accepts a valid payload and returns proper schema."""
-    # Create a tiny 1x1 dummy JPEG base64 payload
-    dummy_bytes = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C\x00"
-    dummy_b64 = base64.b64encode(dummy_bytes).decode("utf-8")
+def test_describe_endpoint_with_mock(monkeypatch):
+    """Verify /api/describe accepts a valid payload and returns proper schema (PDR T6)."""
+    from backend.app import main
 
+    async def mock_gen(*args, **kwargs):
+        return (
+            "A table is directly ahead, about two steps away. The floor is clear.",
+            "mock/test-vlm",
+        )
+
+    monkeypatch.setattr(main, "generate_scene_description", mock_gen)
+
+    dummy_b64 = base64.b64encode(b"fake_image_bytes_for_testing").decode("utf-8")
     payload = {
         "image_b64": dummy_b64,
         "mode": "describe",

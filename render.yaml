@@ -15,7 +15,7 @@ services:
       - key: VLM_PROVIDER
         value: gemini
       - key: VLM_MODEL
-        value: gemini-2.0-flash
+        value: gemini-3.5-flash
       - key: VLM_API_KEY
         sync: false
       - key: MAX_IMAGE_BYTES

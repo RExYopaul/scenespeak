@@ -46,31 +46,48 @@ async def call_gemini_vlm(
     prompt: str,
     image_bytes: bytes,
 ) -> Tuple[str, str]:
-    """Calls Google Gemini using the google-genai SDK."""
-    try:
-        from google import genai
-        from google.genai import types
+    """Calls Google Gemini using the google-genai SDK with automatic model fallback."""
+    from google import genai
+    from google.genai import types
 
-        client = genai.Client(api_key=settings.vlm_api_key)
-        
-        response = await client.aio.models.generate_content(
-            model=settings.vlm_model,
-            contents=[
-                types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type="image/jpeg",
-                ),
-                prompt,
-            ],
-            config=types.GenerateContentConfig(
-                temperature=settings.temperature,
-                max_output_tokens=settings.max_tokens,
-            ),
-        )
-        return response.text or "", f"gemini/{settings.vlm_model}"
-    except Exception as exc:
-        logger.error(f"Gemini API call failed: {exc}")
-        raise exc
+    client = genai.Client(api_key=settings.vlm_api_key)
+
+    # Primary model followed by resilient fallback candidates
+    models_to_try = [settings.vlm_model]
+    for fallback in ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"]:
+        if fallback not in models_to_try:
+            models_to_try.append(fallback)
+
+    last_error = None
+    for model_name in models_to_try:
+        try:
+            config_args = {
+                "temperature": settings.temperature,
+                "max_output_tokens": 1000,
+            }
+            try:
+                config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+            except Exception:
+                pass
+
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=[
+                    types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type="image/jpeg",
+                    ),
+                    prompt,
+                ],
+                config=types.GenerateContentConfig(**config_args),
+            )
+            return response.text or "", f"gemini/{model_name}"
+        except Exception as exc:
+            last_error = exc
+            logger.warning(f"Gemini call with '{model_name}' failed: {exc}. Trying next candidate...")
+
+    logger.error(f"All Gemini models exhausted. Last error: {last_error}")
+    raise last_error
 
 
 async def call_openai_vlm(
