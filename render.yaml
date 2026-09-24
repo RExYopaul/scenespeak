@@ -1,0 +1,26 @@
+# Render Blueprint for SceneSpeak Deployment
+# See PDR Section 16 for configuration details
+
+services:
+  - type: web
+    name: scenespeak
+    runtime: python
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: VLM_PROVIDER
+        value: gemini
+      - key: VLM_MODEL
+        value: gemini-2.0-flash
+      - key: VLM_API_KEY
+        sync: false
+      - key: MAX_IMAGE_BYTES
+        value: 2000000
+      - key: RATE_LIMIT_PER_MIN
+        value: 30
+      - key: DATABASE_URL
+        value: sqlite:///./scenespeak.db

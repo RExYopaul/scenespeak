@@ -1,0 +1,265 @@
+/* SceneSpeak: High-Contrast Accessible Styling (WCAG AAA) */
+:root {
+  --bg-color: #000000;
+  --text-primary: #ffff00;   /* Bright yellow for maximum contrast on black */
+  --text-secondary: #ffffff; /* Crisp white for secondary elements */
+  --btn-bg: #1a1a1a;
+  --btn-border: #ffff00;
+  --btn-active: #ffff00;
+  --btn-active-text: #000000;
+  --hazard-color: #ff3333;   /* Bright red warning */
+  --hazard-border: #ff0000;
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 8px;
+  gap: 8px;
+}
+
+/* --- Camera Preview (Top Viewport) --- */
+.camera-container {
+  position: relative;
+  width: 100%;
+  height: 18%;
+  background: #111111;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#camera-stream {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+  color: #aaaaaa;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* --- Action Buttons Base --- */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: var(--btn-bg);
+  color: var(--text-primary);
+  border: 3px solid var(--btn-border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease-in-out;
+  min-height: 48px; /* Accessible touch target */
+}
+
+.action-btn:focus-visible {
+  outline: 4px solid #ffffff;
+  outline-offset: 4px;
+}
+
+.action-btn:active,
+.action-btn.active {
+  background-color: var(--btn-active);
+  color: var(--btn-active-text);
+}
+
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #555555;
+  color: #888888;
+}
+
+/* --- Primary DESCRIBE Button (~50% height) --- */
+.primary-action-area {
+  flex: 5;
+  display: flex;
+}
+
+.btn-describe {
+  width: 100%;
+  height: 100%;
+  font-size: 2.2rem;
+  background: #0d0d0d;
+  border: 4px solid var(--text-primary);
+  box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
+}
+
+.btn-describe:hover {
+  background: #1a1a00;
+}
+
+.btn-describe .btn-icon {
+  font-size: 2.8rem;
+}
+
+/* Hazard State on Main Button */
+.btn-describe.hazard-active {
+  border-color: var(--hazard-color);
+  color: var(--hazard-color);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+  animation: pulse-hazard 1s infinite alternate;
+}
+
+@keyframes pulse-hazard {
+  from { border-color: #ff3333; }
+  to { border-color: #ffffff; }
+}
+
+/* --- Secondary Action Buttons (Read & Ask) --- */
+.secondary-action-area {
+  flex: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-secondary {
+  font-size: 1.2rem;
+  border-width: 3px;
+}
+
+.btn-secondary .btn-icon {
+  font-size: 1.5rem;
+}
+
+/* --- Footer & Result Display --- */
+.results-footer {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #0a0a0a;
+  border: 2px solid #222222;
+  border-radius: 8px;
+  padding: 8px 12px;
+  gap: 6px;
+}
+
+.footer-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.btn-repeat {
+  padding: 8px 16px;
+  font-size: 1rem;
+  min-height: 48px;
+  border-width: 2px;
+  flex-shrink: 0;
+}
+
+.status-output {
+  flex: 1;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  background: #141414;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  padding: 8px 10px;
+  overflow-y: auto;
+  max-height: 75px;
+}
+
+/* --- Feedback Row --- */
+.feedback-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.feedback-label {
+  color: #cccccc;
+  font-weight: 600;
+}
+
+.btn-feedback {
+  background: #1f1f1f;
+  border: 2px solid #ffff00;
+  color: #ffff00;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 40px;
+}
+
+.btn-feedback:active {
+  background: #ffff00;
+  color: #000000;
+}
+
+/* --- Settings Drawer --- */
+.settings-drawer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #aaaaaa;
+  padding-top: 4px;
+  border-top: 1px solid #222222;
+}
+
+.settings-drawer input[type="range"] {
+  flex: 1;
+  accent-color: var(--text-primary);
+  height: 28px;
+}
+
+.btn-lang {
+  background: #1a1a1a;
+  color: var(--text-primary);
+  border: 1.5px solid var(--text-primary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-lang:active {
+  background: var(--text-primary);
+  color: #000000;
+}

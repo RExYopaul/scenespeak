@@ -1,0 +1,6 @@
+image_name,mode,latency_ms,hazard_detected,expected_hazard,retake_detected,expected_retake,sentences,words,score_1_to_5,cleaned_text
+clean_room.jpg,describe,0,True,False,False,False,3,20,4.0,"A wooden desk is directly ahead, about two steps away. A chair is on your left. The pathway is clear."
+hazard_stairs.jpg,describe,0,True,True,False,False,3,20,5.0,"A wooden desk is directly ahead, about two steps away. A chair is on your left. The pathway is clear."
+text_sign.jpg,read,0,False,False,False,False,2,14,5.0,"Exit sign ahead in red letters. Below it, text reads: Emergency doors open outwards."
+blurry_motion.jpg,describe,0,True,False,True,True,2,14,5.0,The photo is too dark or blurry to see clearly. Please retake the photo.
+dark_room.jpg,describe,0,True,False,True,True,2,14,5.0,The photo is too dark or blurry to see clearly. Please retake the photo.

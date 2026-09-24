@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="SceneSpeak: Voice-First Assistive Scene Description for the Visually Impaired">
+  <title>SceneSpeak - Assistive Vision</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Camera Viewport (hidden from screen readers to prevent noise) -->
+    <section class="camera-container" aria-hidden="true">
+      <video id="camera-stream" autoplay playsinline muted></video>
+      <canvas id="capture-canvas" style="display: none;"></canvas>
+      <div id="camera-status" class="camera-overlay">Starting camera...</div>
+    </section>
+
+    <!-- Main Action: DESCRIBE button (occupies ~50% of the screen height) -->
+    <main class="primary-action-area">
+      <button 
+        id="btn-describe" 
+        class="action-btn btn-describe" 
+        aria-label="Describe scene in front of you"
+        type="button">
+        <span class="btn-icon" aria-hidden="true">👁️</span>
+        <span class="btn-text">DESCRIBE</span>
+      </button>
+    </main>
+
+    <!-- Secondary Actions: READ TEXT and ASK A QUESTION -->
+    <section class="secondary-action-area" aria-label="Secondary actions">
+      <button 
+        id="btn-read" 
+        class="action-btn btn-secondary" 
+        aria-label="Read visible text on signs, labels, or menus"
+        type="button">
+        <span class="btn-icon" aria-hidden="true">📖</span>
+        <span class="btn-text">READ TEXT</span>
+      </button>
+
+      <button 
+        id="btn-ask" 
+        class="action-btn btn-secondary" 
+        aria-label="Ask a spoken question about this scene"
+        type="button">
+        <span class="btn-icon" aria-hidden="true">🎙️</span>
+        <span class="btn-text">ASK</span>
+      </button>
+    </section>
+
+    <!-- Results, Repeat & Feedback Area -->
+    <footer class="results-footer">
+      <div class="footer-top-row">
+        <!-- Repeat Button -->
+        <button 
+          id="btn-repeat" 
+          class="action-btn btn-repeat" 
+          aria-label="Repeat last spoken description"
+          disabled
+          type="button">
+          <span class="btn-icon" aria-hidden="true">🔁</span>
+          <span class="btn-text">REPEAT</span>
+        </button>
+
+        <!-- Live Status / Result Announcement for Screen Readers -->
+        <div 
+          id="status-output" 
+          class="status-output" 
+          role="status" 
+          aria-live="polite" 
+          aria-atomic="true">
+          Ready. Tap Describe to begin.
+        </div>
+      </div>
+
+      <!-- Quick Feedback Row (Visible after first description) -->
+      <div id="feedback-row" class="feedback-row" style="display: none;">
+        <span class="feedback-label">Helpful?</span>
+        <button id="btn-feedback-good" class="btn-feedback" aria-label="Mark description as helpful" type="button">👍 Yes</button>
+        <button id="btn-feedback-bad" class="btn-feedback" aria-label="Mark description as not helpful" type="button">👎 No</button>
+      </div>
+
+      <!-- Speech Rate & Language Settings -->
+      <div class="settings-drawer">
+        <label for="speech-rate" class="rate-label">
+          Speed: <span id="rate-value">1.0x</span>
+        </label>
+        <input 
+          type="range" 
+          id="speech-rate" 
+          min="0.8" 
+          max="1.5" 
+          step="0.1" 
+          value="1.0" 
+          aria-label="Adjust voice reading speed from 0.8x to 1.5x">
+        <button 
+          id="btn-lang-toggle" 
+          class="btn-lang" 
+          type="button" 
+          aria-label="Toggle language between English and Hindi">
+          🌐 EN
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
