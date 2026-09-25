@@ -92,6 +92,34 @@
     localStorage.setItem("scenespeak_speech_rate", speechRate.toString());
   });
 
+  // --- Camera Shutter Click Tone ---
+  function playCameraShutterSound() {
+    try {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1000, audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.start();
+      osc.stop(audioContext.currentTime + 0.09);
+    } catch (e) {
+      // Ignored if audioContext not available
+    }
+  }
+
   // --- Web Audio Hazard Chime ---
   function playHazardAlertTone() {
     try {
@@ -296,13 +324,15 @@
   }
 
   // --- API Call ---
-  async function callDescribeApi(mode, question = null) {
-    // Motion-based capture stabilization: delay capture if phone is shaking (PDR Section 10.1)
-    if (isDeviceMoving) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+  async function callDescribeApi(mode, question = null, existingFrame = null) {
+    let frame = existingFrame;
+    if (!frame) {
+      // Motion-based capture stabilization fallback
+      if (isDeviceMoving) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      frame = captureFrame();
     }
-
-    const frame = captureFrame();
 
     // Perform client-side quality verification
     const quality = checkQuality(frame);
@@ -372,27 +402,39 @@
   function triggerDescribe() {
     if (isProcessing) return;
     setBusy(true);
-    vibrate(200);
+    playCameraShutterSound();
+    vibrate(150);
+
+    // Instant snapshot on tap: capture right away so user doesn't need to hold the camera steady
+    const frame = captureFrame();
+
     const cue = currentLang === "hi" ? "देख रहा हूँ।" : "Looking.";
-    speak(cue, () => {
-      callDescribeApi("describe");
-    });
+    speak(cue);
+    callDescribeApi("describe", null, frame);
   }
 
   function triggerRead() {
     if (isProcessing) return;
     setBusy(true);
-    vibrate(200);
+    playCameraShutterSound();
+    vibrate(150);
+
+    // Instant snapshot on tap
+    const frame = captureFrame();
+
     const cue = currentLang === "hi" ? "पाठ पढ़ रहा हूँ।" : "Reading text.";
-    speak(cue, () => {
-      callDescribeApi("read");
-    });
+    speak(cue);
+    callDescribeApi("read", null, frame);
   }
 
   function triggerAsk() {
     if (isProcessing) return;
     setBusy(true);
-    vibrate(200);
+    playCameraShutterSound();
+    vibrate(150);
+
+    // Instant snapshot on tap: captured immediately so user can bring phone to mouth to speak
+    const frame = captureFrame();
 
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
@@ -416,9 +458,8 @@
         const question = event.results[0][0].transcript;
         statusOutput.textContent = `Question: "${question}"`;
         const finding = currentLang === "hi" ? "उत्तर खोज रहा हूँ।" : "Finding answer.";
-        speak(finding, () => {
-          callDescribeApi("ask", question);
-        });
+        speak(finding);
+        callDescribeApi("ask", question, frame);
       };
 
       recognition.onerror = (e) => {
