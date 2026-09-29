@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <meta name="description" content="SceneSpeak: Voice-First Assistive Scene Description for the Visually Impaired">
   <title>SceneSpeak - Assistive Vision</title>
-  <link rel="stylesheet" href="style.css?v=2.1">
+  <link rel="stylesheet" href="style.css?v=2.2">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -14,7 +14,23 @@
     <!-- Camera Viewport (hidden from screen readers to prevent noise) -->
     <section class="camera-container" aria-hidden="true">
       <video id="camera-stream" autoplay playsinline muted></video>
-      <canvas id="capture-canvas" style="display: none;"></canvas>
+      <canvas id="capture-canvas" class="camera-freeze-canvas" style="display: none;"></canvas>
+
+      <!-- Camera In-Box Loading & Scanning Overlay -->
+      <div id="camera-loader" class="camera-loader" style="display: none;">
+        <div class="scanner-grid">
+          <div class="scanner-laser"></div>
+          <div class="scanner-corner top-left"></div>
+          <div class="scanner-corner top-right"></div>
+          <div class="scanner-corner bottom-left"></div>
+          <div class="scanner-corner bottom-right"></div>
+        </div>
+        <div class="loader-content">
+          <div class="loader-spinner"></div>
+          <div id="loader-text" class="loader-text">Analyzing scene...</div>
+        </div>
+      </div>
+
       <div id="camera-status" class="camera-overlay">Starting camera...</div>
     </section>
 
@@ -107,6 +123,6 @@
     </footer>
   </div>
 
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=2.2"></script>
 </body>
 </html>

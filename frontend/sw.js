@@ -1,5 +1,5 @@
 // SceneSpeak Service Worker (PWA with Network-First caching for live updates)
-const CACHE_NAME = "scenespeak-v2";
+const CACHE_NAME = "scenespeak-v3";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",

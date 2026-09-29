@@ -18,6 +18,8 @@
   // --- DOM Elements ---
   const video = document.getElementById("camera-stream");
   const canvas = document.getElementById("capture-canvas");
+  const cameraLoader = document.getElementById("camera-loader");
+  const loaderText = document.getElementById("loader-text");
   const cameraStatus = document.getElementById("camera-status");
   const statusOutput = document.getElementById("status-output");
   const btnDescribe = document.getElementById("btn-describe");
@@ -337,9 +339,10 @@
     // Perform client-side quality verification
     const quality = checkQuality(frame);
     if (!quality.passed) {
+      setBusy(false);
       vibrate([100, 100]);
       statusOutput.textContent = quality.reason;
-      speak(quality.reason, () => setBusy(false));
+      speak(quality.reason);
       return;
     }
 
@@ -377,6 +380,9 @@
       btnRepeat.disabled = false;
       feedbackRow.style.display = "flex";
 
+      // Stop camera loader & resume live camera IMMEDIATELY once processing is done!
+      setBusy(false);
+
       // Hazard Alert Handling
       if (data.hazard) {
         btnDescribe.classList.add("hazard-active");
@@ -388,25 +394,26 @@
 
       // Read output aloud
       statusOutput.textContent = data.text;
-      speak(data.text, () => setBusy(false));
+      speak(data.text);
 
     } catch (err) {
       console.error("Describe API failure:", err);
+      setBusy(false);
       const msg = err.message || "Could not connect to the scene service. Please check your network.";
       statusOutput.textContent = msg;
-      speak(msg, () => setBusy(false));
+      speak(msg);
     }
   }
 
   // --- Mode Handlers ---
   function triggerDescribe() {
     if (isProcessing) return;
-    setBusy(true);
     playCameraShutterSound();
     vibrate(150);
 
     // Instant snapshot on tap: capture right away so user doesn't need to hold the camera steady
     const frame = captureFrame();
+    setBusy(true, "describe");
 
     const cue = currentLang === "hi" ? "देख रहा हूँ।" : "Looking.";
     speak(cue);
@@ -415,12 +422,12 @@
 
   function triggerRead() {
     if (isProcessing) return;
-    setBusy(true);
     playCameraShutterSound();
     vibrate(150);
 
     // Instant snapshot on tap
     const frame = captureFrame();
+    setBusy(true, "read");
 
     const cue = currentLang === "hi" ? "पाठ पढ़ रहा हूँ।" : "Reading text.";
     speak(cue);
@@ -429,7 +436,6 @@
 
   function triggerAsk() {
     if (isProcessing) return;
-    setBusy(true);
     playCameraShutterSound();
     vibrate(150);
 
@@ -441,7 +447,7 @@
       const unsupported = currentLang === "hi"
         ? "इस ब्राउज़र में ध्वनि पहचान समर्थित नहीं है।"
         : "Speech recognition is not supported in this browser.";
-      speak(unsupported, () => setBusy(false));
+      speak(unsupported);
       return;
     }
 
@@ -459,27 +465,31 @@
         statusOutput.textContent = `Question: "${question}"`;
         const finding = currentLang === "hi" ? "उत्तर खोज रहा हूँ।" : "Finding answer.";
         speak(finding);
+        setBusy(true, "ask");
         callDescribeApi("ask", question, frame);
       };
 
       recognition.onerror = (e) => {
         console.error("SpeechRecognition error:", e);
+        setBusy(false);
         const errMsg = currentLang === "hi"
           ? "प्रश्न सुनाई नहीं दिया। कृपया पुनः प्रयास करें।"
           : "I could not hear your question. Please try again.";
-        speak(errMsg, () => setBusy(false));
+        speak(errMsg);
       };
 
       recognition.onnomatch = () => {
+        setBusy(false);
         const noMatchMsg = currentLang === "hi" ? "कोई आवाज़ सुनाई नहीं दी।" : "No speech recognized. Please try again.";
-        speak(noMatchMsg, () => setBusy(false));
+        speak(noMatchMsg);
       };
 
       try {
         recognition.start();
       } catch (e) {
+        setBusy(false);
         const micErr = currentLang === "hi" ? "माइक उपलब्ध नहीं है।" : "Microphone is currently unavailable.";
-        speak(micErr, () => setBusy(false));
+        speak(micErr);
       }
     });
   }
@@ -511,8 +521,46 @@
     }
   }
 
+  // --- In-Camera Loading State ---
+  function showCameraLoading(mode = "describe") {
+    if (canvas) {
+      canvas.style.display = "block"; // Freezes the captured photo on camera preview
+    }
+    if (cameraLoader) {
+      cameraLoader.style.display = "flex";
+      if (loaderText) {
+        if (currentLang === "hi") {
+          loaderText.textContent = mode === "read"
+            ? "पाठ पढ़ा जा रहा है..."
+            : mode === "ask"
+            ? "उत्तर खोजा जा रहा है..."
+            : "दृश्य का विश्लेषण हो रहा है...";
+        } else {
+          loaderText.textContent = mode === "read"
+            ? "Reading text..."
+            : mode === "ask"
+            ? "Finding answer..."
+            : "Analyzing scene...";
+        }
+      }
+    }
+  }
+
+  function hideCameraLoading() {
+    if (cameraLoader) {
+      cameraLoader.style.display = "none";
+    }
+    if (canvas) {
+      canvas.style.display = "none"; // Hide frozen snapshot, revealing live camera
+    }
+    // Resume live camera video if needed
+    if (video && video.paused) {
+      video.play().catch(() => {});
+    }
+  }
+
   // --- Busy State Toggle ---
-  function setBusy(busy) {
+  function setBusy(busy, mode = "describe") {
     isProcessing = busy;
     btnDescribe.disabled = busy;
     btnRead.disabled = busy;
@@ -520,8 +568,10 @@
 
     if (busy) {
       btnDescribe.classList.add("active");
+      showCameraLoading(mode);
     } else {
       btnDescribe.classList.remove("active");
+      hideCameraLoading();
     }
   }
 
