@@ -52,9 +52,9 @@ async def call_gemini_vlm(
 
     client = genai.Client(api_key=settings.vlm_api_key)
 
-    # Primary model followed by resilient fallback candidates
+    # Primary model followed by resilient fallback candidates (all real Gemini 2.5 series names)
     models_to_try = [settings.vlm_model]
-    for fallback in ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"]:
+    for fallback in ["gemini-2.5-flash", "gemini-2.5-flash-lite"]:
         if fallback not in models_to_try:
             models_to_try.append(fallback)
 
