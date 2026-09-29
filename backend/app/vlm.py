@@ -52,39 +52,52 @@ async def call_gemini_vlm(
 
     client = genai.Client(api_key=settings.vlm_api_key)
 
-    # Primary model followed by resilient fallback candidates (all real Gemini 2.5 series names)
+    # Primary model followed by resilient fallback candidates
     models_to_try = [settings.vlm_model]
-    for fallback in ["gemini-2.5-flash", "gemini-2.5-flash-lite"]:
+    for fallback in ["gemini-3.8-flash", "gemini-3.5-flash-lite"]:
         if fallback not in models_to_try:
             models_to_try.append(fallback)
 
     last_error = None
     for model_name in models_to_try:
-        try:
-            config_args = {
-                "temperature": settings.temperature,
-                "max_output_tokens": 1000,
-            }
+        # Retry up to 2 times per model (handles transient 503 high-demand errors)
+        for attempt in range(2):
             try:
-                config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-            except Exception:
-                pass
+                config_args = {
+                    "temperature": settings.temperature,
+                    "max_output_tokens": 1000,
+                }
+                # thinking_budget=0 only works on full flash models, not lite variants
+                is_lite = "lite" in model_name
+                if not is_lite:
+                    try:
+                        config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+                    except Exception:
+                        pass
 
-            response = await client.aio.models.generate_content(
-                model=model_name,
-                contents=[
-                    types.Part.from_bytes(
-                        data=image_bytes,
-                        mime_type="image/jpeg",
-                    ),
-                    prompt,
-                ],
-                config=types.GenerateContentConfig(**config_args),
-            )
-            return response.text or "", f"gemini/{model_name}"
-        except Exception as exc:
-            last_error = exc
-            logger.warning(f"Gemini call with '{model_name}' failed: {exc}. Trying next candidate...")
+                response = await client.aio.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        types.Part.from_bytes(
+                            data=image_bytes,
+                            mime_type="image/jpeg",
+                        ),
+                        prompt,
+                    ],
+                    config=types.GenerateContentConfig(**config_args),
+                )
+                return response.text or "", f"gemini/{model_name}"
+            except Exception as exc:
+                err_str = str(exc)
+                # Retry on transient 503 without marking this model as failed
+                if "503" in err_str and attempt == 0:
+                    logger.warning(f"Gemini '{model_name}' returned 503 (high demand), retrying once...")
+                    import asyncio as _asyncio
+                    await _asyncio.sleep(1.5)
+                    continue
+                last_error = exc
+                logger.warning(f"Gemini call with '{model_name}' failed: {exc}. Trying next candidate...")
+                break
 
     logger.error(f"All Gemini models exhausted. Last error: {last_error}")
     raise last_error
